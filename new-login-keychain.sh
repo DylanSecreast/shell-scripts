@@ -18,7 +18,11 @@
 # 0.0.1 (4/19/15) Initial commit
 
 # DESCRIPTION:
-# Resetting a user's password in OS X can be completed by booting into the recovery partition and submitting the command "resetpassword" via terminal. After doing so, the user's login keychain will be locked. This script will delete the locked login keychain, flush the keychain cache, and create a new default login keychain.
+# Resetting a user's password in OS X can be completed by booting into the
+# recovery partition (10.7+) and submitting the command "resetpassword" via
+# terminal. After doing so, the user's login keychain will be locked. This
+# script will delete the locked login keychain, flush the keychain cache,
+# and create a new default login keychain.
 
 
 # Set variables
