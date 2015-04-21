@@ -16,13 +16,12 @@
 
 # STATE CHANGE LOG:
 # 0.0.1 (4/20/15) Initial commit
+# TODO: add option to delete emails from server
 
 # DESCRIPTION:
-# Resetting a user's password in OS X can be completed by booting into the
-# recovery partition (10.7+) and submitting the command "resetpassword" via
-# terminal. After doing so, the user's login keychain will be locked. This
-# script will delete the locked login keychain, flush the keychain cache,
-# and create a new default login keychain.
+# Developed for use by IS Technology Service Desk employees at the University of Oregon.
+# Script parses a user's DuckID and creates a backup of all emails that are currently
+# in their Inbox, Archive, Drafts, Sent, Junk, and Trash folders.
 
 path="$HOME/Desktop"
 filename="WebmailBackup"
@@ -30,10 +29,8 @@ filename="WebmailBackup"
 # Create local backup directory structure
 mkdir -p $path/$filename/{Inbox,Archive,Drafts,Sent,Junk,Trash,temp}
 
-# SSH w/ DuckID
-# TODO remove before release, script will be launched within ssh'd acct.
+# Get DuckID
 read -p "Please enter your DuckID: " duckID
-#ssh $duckID@shell.uoregon.edu
 
 # Parse UOregon Maildir (recursive & includes dot files)
 rsync -chavzP --stats $duckID@shell.uoregon.edu:~/Maildir/ $path/$filename/temp
@@ -52,7 +49,6 @@ documentCheck() {
 
 
 # Organize backup into local folders:
-# TODO check if files exist in directory before moving
 cd $path/$filename/temp
 moveFiles() {
 	if documentCheck $1; then
@@ -70,7 +66,6 @@ moveFiles Sent
 moveFiles Junk
 moveFiles Trash
 
-# TODO recursively remove all dovecot files
 
 # Convert emails to .txt if they exist in directory
 # TODO convert emails to .eml?
