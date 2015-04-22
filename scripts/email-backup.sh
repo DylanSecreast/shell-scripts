@@ -23,8 +23,8 @@
 # Script parses a user's DuckID and creates a backup of all emails that are currently
 # in their Inbox, Archive, Drafts, Sent, Junk, and Trash folders.
 
-path="$HOME/Desktop"
-filename="WebmailBackup"
+path="$HOME"
+filename="TempWebmailBackup"
 
 # Create local backup directory structure
 mkdir -p $path/$filename/{Inbox,Archive,Drafts,Sent,Junk,Trash,temp}
@@ -33,71 +33,61 @@ mkdir -p $path/$filename/{Inbox,Archive,Drafts,Sent,Junk,Trash,temp}
 read -p "Please enter your DuckID: " duckID
 
 # Parse UOregon Maildir (recursive & includes dot files)
-rsync -chavzP --stats $duckID@shell.uoregon.edu:~/Maildir/ $path/$filename/temp
-
-
+rsync -chavzP --stats $duckID@shell.uoregon.edu:~/Maildir/ $path/$filename/temp/
+echo ""
 
 # Document verifier, pass in folder name
+cd $path/$filename
 documentCheck() {
-	if [ "$(ls -A ./$1)" ]; then
-		return 1	# found documents in folder
+	if [ "$(ls -A ./$1)" ]; then	
+		return 0	# found documents in folder
 	else
-		return 0	# did not find documents in folder
+		return 1	# did not find documents in folder	
 	fi
 }
-
-
 
 # Organize backup into local folders:
-cd $path/$filename/temp
 moveFiles() {
-	if documentCheck $1; then
-		mv .$1/cur/* ./$1
-		echo "Organizing $1 folder."
-	fi
+	# $1 = folder to check
+	# $2 = move destination
+	documentCheck $1 && mv ./$1/* ./$2 && echo "Organizing $2 folder."
 }
-
-mv ./temp/.$1/cur/* ./$1
-
-mv ./temp/cur/* ./Inbox # Inbox has different file structure
-moveFiles Archive
-moveFiles Drafts
-moveFiles Sent
-moveFiles Junk
-moveFiles Trash
-
+moveFiles temp/cur Inbox
+moveFiles temp/.Archive/cur Archive
+moveFiles temp/.Drafts/cur Drafts
+moveFiles temp/.Sent/cur Sent
+moveFiles temp/.Junk/cur Junk
+moveFiles temp/.Trash/cur Trash
 
 # Convert emails to .txt if they exist in directory
 # TODO convert emails to .eml?
-convertCheck() {
-	if [ "$(ls -A ./$1)" ]; then
-		echo "Converting $1 emails to .txt format."
-		textutil -convert txt ./$1/*
-	fi
+convertEmail() {
+	documentCheck $1 && textutil -convert txt ./$1/* && echo "Converting emails in $1 folder."
 }
-convertCheck Inbox
-convertCheck Archive
-convertCheck Drafts
-convertCheck Sent
-convertCheck Junk
-convertCheck Trash
+convertEmail Inbox
+convertEmail Archive
+convertEmail Drafts
+convertEmail Sent
+convertEmail Junk
+convertEmail Trash
 
 # Clean up
-cleanUpCheck() {
-	if [ "$(ls -A ./$1)" ]; then
-		echo "Cleaning up $1 folder."
-		find ./$1 -type f -not -name '*txt' | xargs rm
-	fi
-
+cleanUp() {
+	find ./$1 -type f -not -name '*txt' | xargs rm && echo "Cleaning up $1 folder."
 }
-cleanUpCheck Inbox
-cleanUpCheck Archive
-cleanUpCheck Drafts
-cleanUpCheck Sent
-cleanUpCheck Junk
-cleanUpCheck Trash
-rm -rf ./temp
+cleanUp Inbox
+cleanUp Archive
+cleanUp Drafts
+cleanUp Sent
+cleanUp Junk
+cleanUp Trash
 
-echo -e "\nBackup Complete.\n"
+# Zip backup, place on desktop, delete temp folder
+zip -r WebmailBackup.zip $path/$filename/
+mv ./WebmailBackup.zip ~/Desktop
+rm -rf $path/$filename
+
+
+echo "\nBackup Complete.\n"
 
 exit
